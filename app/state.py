@@ -7,3 +7,7 @@ class Create_Visit(StatesGroup):
     email = State()
     location = State()
     add_website = State()
+    custom_website_name = State()
+    custom_website_link = State()
+    messenger = State()
+    photo = State()

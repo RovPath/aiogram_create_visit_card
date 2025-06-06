@@ -28,3 +28,11 @@ def website_keyboard():
     for text, callback_data in websites:
         keyboard.add(InlineKeyboardButton(text=text, callback_data=callback_data))
     return keyboard.adjust(2).as_markup()
+
+
+confirm_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Подтвердить", callback_data="confirm_continue")],
+        [InlineKeyboardButton(text="🖋️ Изменить", callback_data="confirm_edit")],
+    ]
+)
