@@ -205,7 +205,52 @@ async def F7_create_visit(message: Message, state: FSMContext):
 
 @router.message(Create_Visit.photo, F.photo)
 async def F8_create_visit(message: Message, state: FSMContext):
-    text = "Подтвердить?"
+    text = (
+        "✅ <b>Подтверждение данных</b>\n"
+        "\n"
+        "Пожалуйста, проверьте информацию, которую вы указали.\n"
+        "Если всё верно — нажмите «Подтвердить».\n"
+        "Если нужно что-то изменить — выберите соответствующий вариант."
+    )
     await state.update_data(photo=message.photo)
-    await message.answer(text, reply_markup=kb.confirm_keyboard)
+    await message.answer(text, parse_mode="HTML", reply_markup=kb.confirm_keyboard)
+
+
+@router.callback_query(F.data == "confirm_continue")
+async def create_confirm(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+
+    full_name = data.get("full_name", "Не указано")
+    specialization = data.get("Specialization", "Не указано")
+    email = data.get("email", "Не указано")
+    location = data.get("location", "Не указано")
+    add_website = data.get("add_website", "Не указано")
+    messenger = data.get("messenger", "Не указано")
+    photo = data.get("photo")
+
+    # Формируем красивый текст карточки
+    card_text = (
+        "🪪 <b>Визитная Карточка</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"👤 <b>Имя:</b> <i>{full_name}</i>\n"
+        f"👔 <b>Специализация:</b> <i>{specialization}</i>\n"
+        f"📧 <b>Email:</b> <code>{email}</code>\n"
+    )
+
+    if location != "Не указано":
+        card_text += f"\n📍 <b>Местоположение:</b> <i>{location}</i>"
+
+    if add_website != "Не указано":
+        card_text += f"\n🔗 <b>Ссылка:</b> <i>{add_website}</i>"
+
+    if messenger != "Не указано":
+        card_text += f"\n💬 <b>Мессенджер:</b> <i>{messenger}</i>"
+
+    # Если есть фото — отправляем как медиа-сообщение
+    if photo:
+        await callback.message.answer_photo(photo=photo[-1].file_id, caption=card_text, parse_mode="HTML")
+    else:
+        await callback.message.answer(card_text, parse_mode="HTML")
+
+    await callback.answer("✅ Карточка успешно создана!")
     await state.clear()
