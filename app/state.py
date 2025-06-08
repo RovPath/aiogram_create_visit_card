@@ -11,3 +11,4 @@ class Create_Visit(StatesGroup):
     custom_website_link = State()
     messenger = State()
     photo = State()
+    comfirm_bot = State()

@@ -79,7 +79,7 @@ async def F4_create_visit(message: Message, state: FSMContext):
 
 
 @router.message(Create_Visit.location, F.text & ~F.text.startswith("⬅️ Пропустить"))
-async def F4_create_visit_location(message: Message, state: FSMContext):
+async def F5_create_visit(message: Message, state: FSMContext):
     text = (
         "🧾 <b>Шаг 5 из 8</b>\n"
         "🔗 <b>Добавьте ссылку для связи</b>\n"
@@ -94,7 +94,7 @@ async def F4_create_visit_location(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data == "skip_location", Create_Visit.location)
-async def F5_create_visit(callback: CallbackQuery, state: FSMContext):
+async def F6_create_visit(callback: CallbackQuery, state: FSMContext):
     text = (
         "🧾 <b>Шаг 5 из 8</b>\n"
         "🔗 <b>Добавьте ссылку для связи</b>\n"
@@ -200,7 +200,46 @@ async def F7_create_visit(message: Message, state: FSMContext):
     )
     await state.update_data(messenger=message.text)
     await state.set_state(Create_Visit.photo)
-    await message.answer(text, parse_mode="HTML")
+    await message.answer(text, parse_mode="HTML", reply_markup=kb.skip_keyboard_photo)
+
+
+@router.callback_query(F.data == "skip_photo", Create_Visit.photo)
+async def F7_create_visit_skip(callback: CallbackQuery, state: FSMContext):
+    await state.update_data(photo=None)  # Указываем, что фото нет
+    await state.set_state(Create_Visit.comfirm_bot)  # Переходим к подтверждению
+
+    data = await state.get_data()
+
+    full_name = data.get("full_name", "Не указано")
+    specialization = data.get("Specialization", "Не указано")
+    email = data.get("email", "Не указано")
+    location = data.get("location", "Не указано")
+    add_website = data.get("add_website", "Не указано")
+    messenger = data.get("messenger", "Не указано")
+
+    card_text = (
+        "🪪 <b>Визитная Карточка</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"👤 <b>Имя:</b> <i>{full_name}</i>\n"
+        f"👔 <b>Специализация:</b> <i>{specialization}</i>\n"
+        f"📧 <b>Email:</b> <code>{email}</code>\n"
+    )
+
+    if location != "Не указано":
+        card_text += f"\n📍 <b>Местоположение:</b> <i>{location}</i>"
+
+    if add_website != "Не указано":
+        card_text += f"\n🔗 <b>Ссылка:</b> <i>{add_website}</i>"
+
+    if messenger != "Не указано":
+        card_text += f"\n💬 <b>Мессенджер:</b> <i>{messenger}</i>"
+
+    # Сохраняем в глобальное хранилище (например, user_cards)
+    user_id = callback.from_user.id
+    user_cards[user_id] = {"text": card_text, "photo": None, "data": data}
+
+    await callback.message.answer(card_text, parse_mode="HTML")
+    await callback.answer("✅ Фото пропущено, карточка создана без фото.")
 
 
 @router.message(Create_Visit.photo, F.photo)
@@ -228,7 +267,6 @@ async def create_confirm(callback: CallbackQuery, state: FSMContext):
     messenger = data.get("messenger", "Не указано")
     photo = data.get("photo")
 
-    # Формируем красивый текст карточки
     card_text = (
         "🪪 <b>Визитная Карточка</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -246,11 +284,26 @@ async def create_confirm(callback: CallbackQuery, state: FSMContext):
     if messenger != "Не указано":
         card_text += f"\n💬 <b>Мессенджер:</b> <i>{messenger}</i>"
 
-    # Если есть фото — отправляем как медиа-сообщение
-    if photo:
-        await callback.message.answer_photo(photo=photo[-1].file_id, caption=card_text, parse_mode="HTML")
-    else:
-        await callback.message.answer(card_text, parse_mode="HTML")
+        # Если есть фото — отправляем как медиа-сообщение
+    user_id = callback.from_user.id
+    user_cards[user_id] = {"text": card_text, "photo": photo, "data": data}
 
     await callback.answer("✅ Карточка успешно создана!")
     await state.clear()
+
+
+user_cards = {}
+
+
+@router.message(F.text == "Моя визитная карточка")
+async def savid_visit_card(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    if user_id not in user_cards:
+        await message.answer("❌ Вы ещё не создали карточку.")
+        return
+
+    card = user_cards[user_id]
+    if card.get("photo"):
+        await message.answer_photo(photo=card["photo"][-1].file_id, caption=card["text"], parse_mode="HTML")
+    else:
+        await message.answer(card["text"], parse_mode="HTML")

@@ -13,6 +13,10 @@ skip_keyboard_location = InlineKeyboardMarkup(
     inline_keyboard=[[InlineKeyboardButton(text="❌ Пропустить", callback_data="skip_location")]]
 )
 
+skip_keyboard_photo = InlineKeyboardMarkup(
+    inline_keyboard=[[InlineKeyboardButton(text="❌ Пропустить", callback_data="skip_photo")]]
+)
+
 
 def website_keyboard():
     websites = [
