@@ -8,10 +8,18 @@ from app.state import Create_Visit
 
 router = Router()
 
+user_cards = {}
+
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
-    await message.answer("test", reply_markup=kb.main_non_reg)
+    text = (
+        "👋 <b>Добро пожаловать!</b>\n"
+        "📇 <b>Это бот для создания визитных карточек</b>\n"
+        "\n"
+        "✨ <b>Здесь вы можете заполнить свою визитную карточку и изменять её по своему желанию</b>"
+    )
+    await message.answer(text, parse_mode="HTML", reply_markup=kb.main_non_reg)
 
 
 @router.message(F.text == "Создать визитную карточку")
@@ -153,7 +161,6 @@ async def F6_create_visit(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# --- Ввод названия кастомной платформы ---
 @router.message(Create_Visit.custom_website_name, F.text)
 async def process_custom_website_name(message: Message, state: FSMContext):
     await state.update_data(custom_website_name=message.text)
@@ -205,8 +212,8 @@ async def F7_create_visit(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "skip_photo", Create_Visit.photo)
 async def F7_create_visit_skip(callback: CallbackQuery, state: FSMContext):
-    await state.update_data(photo=None)  # Указываем, что фото нет
-    await state.set_state(Create_Visit.comfirm_bot)  # Переходим к подтверждению
+    await state.update_data(photo=None)
+    await state.set_state(Create_Visit.comfirm_bot)
 
     data = await state.get_data()
 
@@ -233,12 +240,10 @@ async def F7_create_visit_skip(callback: CallbackQuery, state: FSMContext):
 
     if messenger != "Не указано":
         card_text += f"\n💬 <b>Мессенджер:</b> <i>{messenger}</i>"
-
-    # Сохраняем в глобальное хранилище (например, user_cards)
     user_id = callback.from_user.id
     user_cards[user_id] = {"text": card_text, "photo": None, "data": data}
 
-    await callback.message.answer(card_text, parse_mode="HTML")
+    await callback.message.answer(card_text, parse_mode="HTML", reply_markup=kb.confirm_keyboard)
     await callback.answer("✅ Фото пропущено, карточка создана без фото.")
 
 
@@ -284,15 +289,11 @@ async def create_confirm(callback: CallbackQuery, state: FSMContext):
     if messenger != "Не указано":
         card_text += f"\n💬 <b>Мессенджер:</b> <i>{messenger}</i>"
 
-        # Если есть фото — отправляем как медиа-сообщение
     user_id = callback.from_user.id
     user_cards[user_id] = {"text": card_text, "photo": photo, "data": data}
 
     await callback.answer("✅ Карточка успешно создана!")
     await state.clear()
-
-
-user_cards = {}
 
 
 @router.message(F.text == "Моя визитная карточка")

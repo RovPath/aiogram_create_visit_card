@@ -40,3 +40,23 @@ confirm_keyboard = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="🖋️ Изменить", callback_data="confirm_edit")],
     ]
 )
+
+# edit_card = InlineKeyboardMarkup(
+#     inline_keyboard=[
+#         [InlineKeyboardButton(text="👤 Имя", callback_data="edit_full_name")],
+#         [InlineKeyboardButton(text="👔 Специализация", callback_data="edit_Specialization")],
+#         [InlineKeyboardButton(text="📧 Email", callback_data="edit_email")],
+#         [InlineKeyboardButton(text="📍 Местоположение", callback_data="edit_location")],
+#         [InlineKeyboardButton(text="🔗 Ссылка", callback_data="edit_add_website")],
+#         [InlineKeyboardButton(text="💬 Мессенджер", callback_data="edit_messenger")],
+#         [InlineKeyboardButton(text="🖼️ Фото", callback_data="edit_photo")],
+#         [InlineKeyboardButton(text="✅ Готово", callback_data="edit_done")],
+#     ]
+# )
+
+edit_card = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Да", callback_data="edit_yes")],
+        [InlineKeyboardButton(text="❌ Нет", callback_data="edit_no")],
+    ]
+)
